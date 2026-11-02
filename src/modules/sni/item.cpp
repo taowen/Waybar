@@ -247,6 +247,15 @@ static const std::map<std::string_view, std::set<std::string_view>> signal2props
 void Item::onSignal(const Glib::ustring& sender_name, const Glib::ustring& signal_name,
                     const Glib::VariantContainerBase& arguments) {
   spdlog::trace("Tray item '{}' got signal {}", id, signal_name);
+  // NewStatus carries the new value. The object may already have been removed
+  // when a notification icon is withdrawn, so a deferred GetAll is not reliable.
+  if (signal_name == "NewStatus" &&
+      g_variant_is_of_type(arguments.gobj(), G_VARIANT_TYPE("(s)"))) {
+    Glib::Variant<Glib::ustring> status;
+    arguments.get_child(status);
+    setStatus(status.get());
+    return;
+  }
   auto changed = signal2props.find(signal_name.raw());
   if (changed != signal2props.end()) {
     if (update_pending_.empty()) {

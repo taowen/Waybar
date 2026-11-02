@@ -1,6 +1,7 @@
 #include "modules/sni/tray.hpp"
 
 #include <spdlog/spdlog.h>
+#include <algorithm>
 
 namespace waybar::modules::SNI {
 
@@ -24,6 +25,7 @@ Tray::Tray(const std::string& id, const Bar& bar, const Json::Value& config)
 }
 
 void Tray::onAdd(std::unique_ptr<Item>& item) {
+  item->event_box.property_visible().signal_changed().connect([this] { dp.emit(); });
   if (config_["reverse-direction"].isBool() && config_["reverse-direction"].asBool()) {
     box_.pack_end(item->event_box);
   } else {
@@ -38,8 +40,10 @@ void Tray::onRemove(std::unique_ptr<Item>& item) {
 }
 
 auto Tray::update() -> void {
-  // Show tray only when items are available
-  event_box_.set_visible(!box_.get_children().empty());
+  // Passive icons do not keep an otherwise empty tray area visible.
+  auto children = box_.get_children();
+  event_box_.set_visible(std::any_of(children.begin(), children.end(),
+                                    [](const Gtk::Widget* child) { return child->get_visible(); }));
   // Call parent update
   AModule::update();
 }
