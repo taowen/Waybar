@@ -148,6 +148,12 @@ bool waybar::modules::Custom::handleToggle(GdkEventButton* const& e) {
 }
 
 auto waybar::modules::Custom::update() -> void {
+  if (menu_ != nullptr && GTK_IS_MENU_BAR(menu_)) {
+    // An embedded menu bar has its own labels and remains visible without formatted text.
+    event_box_.show();
+    ALabel::update();
+    return;
+  }
   // Hide label if output is empty
   if ((config_["exec"].isString() || config_["exec-if"].isString()) &&
       (output_.out.empty() || output_.exit_code != 0)) {
