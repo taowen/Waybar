@@ -419,20 +419,7 @@ bool Item::handleClick(GdkEventButton* const& ev) {
   auto parameters = Glib::VariantContainerBase::create_tuple(
       {Glib::Variant<int>::create(ev->x_root + bar_.x_global),
        Glib::Variant<int>::create(ev->y_root + bar_.y_global)});
-  if ((ev->button == 1 && item_is_menu) || ev->button == 3) {
-    makeMenu();
-    if (gtk_menu != nullptr) {
-#if GTK_CHECK_VERSION(3, 22, 0)
-      gtk_menu->popup_at_pointer(reinterpret_cast<GdkEvent*>(ev));
-#else
-      gtk_menu->popup(ev->button, ev->time);
-#endif
-      return true;
-    } else {
-      proxy_->call("ContextMenu", parameters);
-      return true;
-    }
-  } else if (ev->button == 1) {
+  auto provideActivation = [&] {
     // Forward the actual user's activation context; the item chooses its window.
     auto* context = gdk_display_get_app_launch_context(event_box.get_display()->gobj());
     auto* app = g_app_info_create_from_commandline("wine", "Tray application",
@@ -446,9 +433,27 @@ bool Item::handleClick(GdkEventButton* const& ev) {
     }
     g_object_unref(app);
     g_object_unref(context);
+  };
+  if ((ev->button == 1 && item_is_menu) || ev->button == 3) {
+    makeMenu();
+    if (gtk_menu != nullptr) {
+#if GTK_CHECK_VERSION(3, 22, 0)
+      gtk_menu->popup_at_pointer(reinterpret_cast<GdkEvent*>(ev));
+#else
+      gtk_menu->popup(ev->button, ev->time);
+#endif
+      return true;
+    } else {
+      provideActivation();
+      proxy_->call("ContextMenu", parameters);
+      return true;
+    }
+  } else if (ev->button == 1) {
+    provideActivation();
     proxy_->call("Activate", parameters);
     return true;
   } else if (ev->button == 2) {
+    provideActivation();
     proxy_->call("SecondaryActivate", parameters);
     return true;
   }
