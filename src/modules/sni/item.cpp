@@ -433,6 +433,19 @@ bool Item::handleClick(GdkEventButton* const& ev) {
       return true;
     }
   } else if (ev->button == 1) {
+    // Forward the actual user's activation context; the item chooses its window.
+    auto* context = gdk_display_get_app_launch_context(event_box.get_display()->gobj());
+    auto* app = g_app_info_create_from_commandline("wine", "Tray application",
+                                                 G_APP_INFO_CREATE_NONE, nullptr);
+    gdk_app_launch_context_set_timestamp(context, ev->time);
+    auto* token = g_app_launch_context_get_startup_notify_id(G_APP_LAUNCH_CONTEXT(context), app, nullptr);
+    if (token != nullptr) {
+      proxy_->call("ProvideXdgActivationToken", Glib::VariantContainerBase::create_tuple(
+          {Glib::Variant<Glib::ustring>::create(token)}));
+      g_free(token);
+    }
+    g_object_unref(app);
+    g_object_unref(context);
     proxy_->call("Activate", parameters);
     return true;
   } else if (ev->button == 2) {
