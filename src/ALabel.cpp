@@ -91,6 +91,16 @@ ALabel::ALabel(const Json::Value& config, const std::string& name, const std::st
       if (menu_ == nullptr) {
         throw std::runtime_error("Failed to get 'menu' object from GtkBuilder");
       }
+      if (GTK_IS_MENU_BAR(menu_)) {
+        // Let GTK own menu anchoring, selection, keyboard navigation and sibling switching.
+        // A menu bar is an embedded widget, not a pointer-positioned context menu.
+        event_box_.remove();
+        gtk_container_add(GTK_CONTAINER(event_box_.gobj()), GTK_WIDGET(menu_));
+        gtk_widget_show_all(GTK_WIDGET(menu_));
+      } else if (!GTK_IS_MENU(menu_)) {
+        menu_ = nullptr;
+        throw std::runtime_error("Expected GtkMenu or GtkMenuBar with id 'menu'");
+      }
       submenus_ = std::map<std::string, GtkMenuItem*>();
       menuActionsMap_ = std::map<std::string, std::string>();
 

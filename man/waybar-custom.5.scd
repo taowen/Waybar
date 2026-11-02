@@ -132,7 +132,7 @@ Addressed by *custom/<name>*
 *menu-file*: ++
 	typeof: string ++
 	Location of the menu descriptor file. There need to be an element of type
-	GtkMenu with id *menu*
+	GtkMenu with id *menu*. A *GtkMenuBar* with that ID is embedded in the module instead; GTK handles its dropdown placement and navigation
 
 *menu-actions*: ++
 	typeof: array ++
