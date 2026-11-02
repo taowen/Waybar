@@ -250,7 +250,7 @@ void Item::onSignal(const Glib::ustring& sender_name, const Glib::ustring& signa
   // NewStatus carries the new value. The object may already have been removed
   // when a notification icon is withdrawn, so a deferred GetAll is not reliable.
   if (signal_name == "NewStatus" &&
-      g_variant_is_of_type(arguments.gobj(), G_VARIANT_TYPE("(s)"))) {
+      arguments.is_of_type(Glib::VariantType("(s)"))) {
     Glib::Variant<Glib::ustring> status;
     arguments.get_child(status);
     setStatus(status.get());
